@@ -23,72 +23,106 @@ const confirmationSuccess =
 searchParams.get("confirmed") === "true";
 
 async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
-event.preventDefault();
+  event.preventDefault();
 
-setErrorMessage("");
-setIsLoading(true);
+  setErrorMessage("");
+  setIsLoading(true);
 
-try {
-  const supabase = createClient();
+  try {
+    const supabase = createClient();
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email: email.trim(),
-    password,
-  });
+    // Sign in with the user's email and password.
+    const { data: authData, error: loginError } =
+      await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
 
-  if (error) {
+    if (loginError || !authData.user) {
+      setErrorMessage(
+        "Unable to log in. Check your email and password, and make sure you have confirmed your email address."
+      );
+      return;
+    }
+
+    // Retrieve this user's account type from their profile.
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("account_type")
+      .eq("id", authData.user.id)
+      .single();
+
+    if (profileError || !profile) {
+      await supabase.auth.signOut();
+
+      setErrorMessage(
+        "We couldn't find your account profile. Please contact support."
+      );
+      return;
+    }
+
+    // Redirect according to the account type in the database.
+    if (profile.account_type === "creator") {
+      router.replace("/creator-dashboard");
+    } else if (profile.account_type === "brand") {
+      router.replace("/brand-dashboard");
+    } else {
+      await supabase.auth.signOut();
+
+      setErrorMessage(
+        "Your account type is invalid. Please contact support."
+      );
+      return;
+    }
+
+    router.refresh();
+  } catch {
     setErrorMessage(
-      "Unable to log in. Check your email and password, and make sure you have confirmed your email address."
+      "Something went wrong. Please check your connection and try again."
     );
-    return;
+  } finally {
+    setIsLoading(false);
   }
-
-  router.push("/");
-  router.refresh();
-} catch {
-  setErrorMessage(
-    "Something went wrong. Please check your connection and try again."
-  );
-} finally {
-  setIsLoading(false);
-}
-
 }
 
 async function handleGoogleLogin() {
-setErrorMessage("");
-setIsGoogleLoading(true);
+  setErrorMessage("");
+  setIsGoogleLoading(true);
 
-try {
-  const supabase = createClient();
+  try {
+    const supabase = createClient();
 
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${window.location.origin}/auth/callback?next=/`,
-      queryParams: {
-        access_type: "offline",
-        prompt: "select_account",
-      },
+    const redirectUrl =
+  window.location.origin + "/auth/callback?next=/";
+
+const { error } = await supabase.auth.signInWithOAuth({
+  provider: "google",
+  options: {
+    redirectTo: redirectUrl,
+    queryParams: {
+      access_type: "offline",
+      prompt: "select_account",
     },
-  });
+  },
+});
 
-  if (error) {
+    if (error) {
+      setErrorMessage(
+        "Google sign-in could not be started. Please try again or use your email and password."
+      );
+      setIsGoogleLoading(false);
+    }
+  } catch {
     setErrorMessage(
-      "Google sign-in could not be started. Please try again or use your email and password."
+      "Something went wrong while connecting to Google. Please try again."
     );
     setIsGoogleLoading(false);
   }
-} catch {
-  setErrorMessage(
-    "Something went wrong while connecting to Google. Please try again."
-  );
-  setIsGoogleLoading(false);
 }
 
-}
 
-return ( <main className="flex min-h-screen bg-white">
+return ( 
+<main className="flex min-h-screen bg-white">
 {/* Left branding panel */} <section className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-purple-700 p-12 text-white lg:flex xl:p-16"> <div className="absolute -right-24 top-20 h-80 w-80 rounded-full bg-purple-500/40 blur-3xl" /> <div className="absolute -bottom-20 -left-16 h-80 w-80 rounded-full bg-indigo-400/30 blur-3xl" />
 
     <Link href="/" className="relative z-10 inline-flex items-center gap-3">
