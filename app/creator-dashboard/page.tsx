@@ -9,7 +9,7 @@ const navigation = [
   { label: "Discover", icon: "⌕", href: "#discover", active: false },
   { label: "My applications", icon: "▤", href: "#applications", active: false },
   { label: "Saved opportunities", icon: "♡", href: "#saved", active: false },
-  { label: "My profile", icon: "◎", href: "#profile", active: false },
+  { label: "My profile", icon: "◎", href: "/profile", active: false },
 ];
 
 const stats = [

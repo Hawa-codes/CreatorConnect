@@ -20,9 +20,9 @@ export async function GET(request: Request) {
 
   // Decide where authentication errors should send the user.
   const failurePath =
-    next === "/reset-password"
-      ? "/forgot-password?error=reset_failed"
-      : "/login?error=confirmation_failed";
+  next === "/reset-password"
+    ? "/forgot-password?error=recovery_failed"
+    : "/login?error=confirmation_failed";
 
   // Handle errors returned directly by Supabase.
   if (authError) {
