@@ -20,16 +20,13 @@ const stats = [
 
 async function CreatorDashboardContent() {
     await connection();
-  // Connect to Supabase on the server
   const supabase = await createClient();
 
-  // Verify the authenticated user
   const {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser();
 
-  // Redirect users who are not authenticated
   if (userError || !user) {
     redirect("/login");
   }
